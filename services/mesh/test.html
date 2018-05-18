@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test mesh-service</title>
+  <script async src="http://raspberrypi.local/websocket" onload="init()"></script>
+  <script async src="http://localhost:5000/websocket" onload="init()"></script>
+</head>
+
+<body>
+  <input type="text" placeholder="Send a message" />
+  <button id="send">Send!</button>
+  <script>
+    let loaded = false;
+
+    const init = () => {
+      if (loaded) { return; }
+
+      console.log('Init');
+
+      loaded = true;
+
+      const ws = createWebsocket({ url: wsUrl() });
+
+      ws.subscribe(new RegExp('mesh/.*'), ({ topic, payload }) => console.log(topic, payload));
+
+      function wsUrl(search = window.location.search) {
+        const params = new URLSearchParams(search);
+        const host = params.get('host') || window.location.hostname;
+        const port = params.get('port') || window.location.port;
+
+        //return `ws://${host}:${port}`;
+        return `ws://${host}:8000`;
+      }
+
+      const send = function () {
+        const message = document.querySelector('input').value;
+        ws.publish({ topic: 'mesh/command/send', payload: { message } });
+      }
+
+      document.querySelector('#send').addEventListener(
+        'click',
+        send
+      );
+
+      document.querySelector('input').addEventListener(
+        'keyup',
+        function (evt) {
+          if (evt.keyCode === 13 /* ENTER */) {
+            send();
+          }
+        }
+      );
+    }
+  </script>
+</body>
+
+</html>
